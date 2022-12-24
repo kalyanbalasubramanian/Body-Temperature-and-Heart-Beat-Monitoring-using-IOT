@@ -1,0 +1,91 @@
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include <LiquidCrystal.h> //Load Liquid Crystal Library
+LiquidCrystal lcd(2,3,4,5,6,7);  //Create Liquid Crystal Object called LCD
+#include <Wire.h>
+#include <SoftwareSerial.h>
+#include "MAX30100_PulseOximeter.h"
+#define REPORTING_PERIOD_MS     1000
+PulseOximeter pox;
+uint32_t tsLastReport = 0;
+int hb=0;
+int sp=0;
+int cnt=0;
+char data;
+
+String response;
+float temp = 0;
+int ran;
+#define ONE_WIRE_BUS 8
+// Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
+OneWire oneWire(ONE_WIRE_BUS);
+// Pass our oneWire reference to Dallas Temperature. 
+DallasTemperature sensors(&oneWire);
+
+
+void setup() 
+{
+Serial.begin(9600);
+delay(500);
+lcd.begin(16,2);
+lcd.setCursor(2,0);
+lcd.print("H:");  
+lcd.setCursor(2,1);
+lcd.print("T:");  
+lcd.setCursor(9,0);
+lcd.print("SP02: ");  
+
+ 
+   if (!pox.begin()) 
+    {
+        Serial.println("FAILED");
+        for(;;);
+    } else 
+    {
+        Serial.println("SUCCESS");
+    }
+    }
+
+void loop() 
+{
+ 
+    pox.update();  
+    if (millis() - tsLastReport > REPORTING_PERIOD_MS) 
+    {
+   hb=pox.getHeartRate();
+   sp=pox.getSpO2(); 
+   tsLastReport = millis();   
+sensors.requestTemperatures();  
+ temp=sensors.getTempCByIndex(0);  //Print Message on First Row
+ 
+lcd.setCursor(5,0);
+lcd.print("    ");
+lcd.setCursor(5,0);
+lcd.print(hb);
+
+lcd.setCursor(14,0);
+lcd.print("   ");
+lcd.setCursor(14,0);
+lcd.print(sp);
+
+lcd.setCursor(5,1);
+lcd.print("   ");
+lcd.setCursor(5,1);
+lcd.print(temp);
+}
+delay(10);
+cnt=cnt+1;
+if(cnt>600)
+{
+  cnt=0;
+Serial.print("*") ;
+Serial.print(hb) ;
+Serial.print(",") ;
+Serial.print(sp) ;
+Serial.print(",") ;
+Serial.print(temp) ;
+Serial.println("#") ;
+
+ 
+}
+}
